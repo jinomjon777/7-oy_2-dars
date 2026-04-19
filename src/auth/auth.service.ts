@@ -14,13 +14,13 @@ export class AuthService {
   private nodemailer: nodemailer.Transporter
   constructor(
     @InjectRepository(Auth) private authRepo: Repository<Auth>,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {
     this.nodemailer = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: "ijumanazarov631@gmail.com",
+    pass: process.env.APP_KEY,
   },
 });
   }
