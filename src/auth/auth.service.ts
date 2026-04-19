@@ -1,21 +1,34 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
-import { InjectModel } from '@nestjs/sequelize';
-import { Auth } from './model/auth.entity';
+import { Auth } from './entities/auth.entity';
 import * as bcrypt from "bcrypt";
-import { Article } from 'src/article/model/article.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import nodemailer from "nodemailer"
+import { verifyDto } from './dto/verify.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(@InjectModel(Auth) private authModel: typeof Auth) {}
+  private nodemailer: nodemailer.Transporter
+  constructor(
+    @InjectRepository(Auth) private authRepo: Repository<Auth>,
+    private jwtService: JwtService
+  ) {
+    this.nodemailer = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+  }
 
-  async register(createAuthDto: CreateAuthDto): Promise<Auth> {
+  async register(createAuthDto: CreateAuthDto): Promise<{ message: string }> {
     const { username, email, password } = createAuthDto;
 
-    const foundedUser = await this.authModel.findOne({
-      where: { email },
-    });
+    const foundedUser = await this.authRepo.findOne({ where: { email } });
 
     if (foundedUser) {
       throw new BadRequestException("User already exists");
@@ -23,74 +36,38 @@ export class AuthService {
 
     const hashPassword = await bcrypt.hash(password, 12);
 
-    const otp = +Array.from({ length: 6 }, () =>
-      Math.floor(Math.random() * 9)
-    ).join("");
+    const otp = Array.from({ length: 6 }, () => Math.floor(Math.random() * 9)).join("");
 
-    return await this.authModel.create({
-      username,
-      email,
-      password: hashPassword,
-      otp,
-    });
+    const time = Date.now() + 120000
+
+    await this.nodemailer.sendMail({ from: "ijumanazarov631@gmail.com", to: email, subject: "lesson", text: "test content", html: `<b>${otp}</b>` })
+
+    const user = this.authRepo.create({ username, email, password: hashPassword, otp, otpTime: time })
+    await this.authRepo.save(user)
+
+    return { message: "Registered" }
   }
 
-  async findAll(): Promise<Auth[]> {
-    return await this.authModel.findAll({
-      attributes: {
-        exclude: ["password"],
-      },
-      include: [{ model: Article }],
-    });
-  }
+  async verify(dto: verifyDto) {
+    const { email, otp } = dto
+    const foundeduser = await this.authRepo.findOne({ where: { email } })
 
-  async findOne(id: number): Promise<Auth> {
-    const user = await this.authModel.findByPk(id, {
-      attributes: { exclude: ["password"] },
-      include: [{ model: Article }],
-    });
+    const otpValidation = /^\d{6}$/.test(otp)
 
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
+    if(!otpValidation) throw new BadRequestException("Invalid otp")
 
-    return user;
-  }
+    if (!foundeduser) throw new UnauthorizedException("Email not found")
 
-  async update(
-    id: number,
-    updateAuthDto: UpdateAuthDto
-  ): Promise<{ message: string }> {
-    const user = await this.authModel.findByPk(id);
+    if (foundeduser.otp !== otp) throw new BadRequestException("Wrong otp")
 
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
-    if (updateAuthDto.password) {
-      updateAuthDto.password = await bcrypt.hash(
-        updateAuthDto.password,
-        12
-      );
-    }
+    const now = Date.now()
+    if (foundeduser.otpTime && foundeduser.otpTime < now) throw new BadRequestException("Otp expired")
 
-    await this.authModel.update(updateAuthDto, {
-      where: { id },
-    });
+      await this.authRepo.update(foundeduser.id, {otp: "", otpTime: 0})
 
-    return { message: "Updated" };
-  }
-
-  async remove(id: number): Promise<{ message: string }> {
-    const user = await this.authModel.findByPk(id);
-
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
-
-    await this.authModel.destroy({
-      where: { id },
-    });
-
-    return { message: "Deleted" };
+      const payload = {username: foundeduser.username, role: foundeduser.role};
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+    };
   }
 }
