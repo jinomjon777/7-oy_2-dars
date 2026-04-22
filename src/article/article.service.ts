@@ -1,44 +1,42 @@
-// import { Injectable, NotFoundException } from '@nestjs/common';
-// import { CreateArticleDto } from './dto/create-article.dto';
-// import { UpdateArticleDto } from './dto/update-article.dto';
-// import { InjectModel } from '@nestjs/sequelize';
-// import { Article } from './model/article.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Article } from './entities/article.entity';
+import { CreateArticleDto } from './dto/create-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
-// @Injectable()
-// export class ArticleService {
-//   constructor(@InjectModel(Article) private articleModel: typeof Article){}
-//   async create(createArticleDto: CreateArticleDto) {
-//     return await this.articleModel.create({...createArticleDto})
-//   }
+@Injectable()
+export class ArticleService {
+  constructor(
+    @InjectRepository(Article) private articleRepo: Repository<Article>,
+  ) {}
 
-//   async findAll(): Promise<Article[]> {
-//     return await this.articleModel.findAll()
-//   }
+  async create(createArticleDto: CreateArticleDto): Promise<Article> {
+    const article = this.articleRepo.create(createArticleDto);
+    return await this.articleRepo.save(article);
+  }
 
-//   async findOne(id: number): Promise<Article> {
-//     const foundedArticle = await this.articleModel.findByPk(id)
+  async findAll(): Promise<Article[]> {
+    return await this.articleRepo.find();
+  }
 
-//     if(!foundedArticle) throw new NotFoundException("Article not found")
+  async findOne(id: number): Promise<Article> {
+    const article = await this.articleRepo.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Article not found');
+    return article;
+  }
 
-//     return foundedArticle
-//   }
+  async update(id: number, updateArticleDto: UpdateArticleDto): Promise<{ message: string }> {
+    const article = await this.articleRepo.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Article not found');
+    await this.articleRepo.update(id, updateArticleDto);
+    return { message: 'Updated' };
+  }
 
-//   async update(id: number, updateArticleDto: UpdateArticleDto): Promise<{message: string}> {
-//     const foundedArticle = await this.articleModel.findByPk(id)
-
-//     if(!foundedArticle) throw new NotFoundException("Article not found")
-
-//       await this.articleModel.update(updateArticleDto, {where: {id}, returning: true})
-
-//     return {message: "Updated"}
-//   }
-
-//   async remove(id: number): Promise<{message: string}> {
-//     const foundedArticle = await this.articleModel.findByPk(id)
-
-//     if(!foundedArticle) throw new NotFoundException("Article not found")
-
-//       await this.articleModel.destroy({where: {id}})
-//     return {message: "Deleted"}
-//   }
-// }
+  async remove(id: number): Promise<{ message: string }> {
+    const article = await this.articleRepo.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Article not found');
+    await this.articleRepo.delete(id);
+    return { message: 'Deleted' };
+  }
+}

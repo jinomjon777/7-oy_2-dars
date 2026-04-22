@@ -1,25 +1,31 @@
+import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { BaseEntity } from "src/database/entities/base.entity";
 import { RolesUser } from "src/shared/enums/roles.enum";
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity } from "typeorm";
 
-
-@Entity({name: 'auth',})
+@Entity({ name: 'auth' })
 export class Auth extends BaseEntity {
+  @ApiProperty({ example: 'john_doe', description: 'Foydalanuvchi nomi' })
   @Column()
   username: string;
 
+  @ApiProperty({ example: 'john@example.com', description: 'Email manzil' })
   @Column()
   email: string;
 
+  @ApiHideProperty()
   @Column()
   password: string;
 
-  @Column({type: "enum", enum: RolesUser, default: RolesUser.USER})
+  @ApiProperty({ enum: RolesUser, example: RolesUser.USER, description: 'Foydalanuvchi roli' })
+  @Column({ type: "enum", enum: RolesUser, default: RolesUser.USER })
   role!: RolesUser;
 
-  @Column({nullable: true})
+  @ApiHideProperty()
+  @Column({ nullable: true })
   otp?: string;
 
-  @Column({type: "bigint", nullable: true})
+  @ApiHideProperty()
+  @Column({ type: "bigint", nullable: true })
   otpTime?: number;
 }
