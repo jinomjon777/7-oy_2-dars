@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBadRequestResponse, ApiOkResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { verifyDto } from './dto/verify.dto';
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -27,5 +27,14 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Email topilmadi' })
   verify(@Body() dto: verifyDto) {
     return this.authService.verify(dto);
+  }
+
+  @ApiBadRequestResponse({description: "User not found"})
+  @ApiBadRequestResponse({description: "Wrong password"})
+  @ApiOkResponse({description: "Please check your email"})
+  @Post("login")
+  @HttpCode(200)
+  login(@Body() dto: LoginDto){
+    return this.authService.login(dto)
   }
 }

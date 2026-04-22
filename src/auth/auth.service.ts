@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import nodemailer from "nodemailer"
 import { verifyDto } from './dto/verify.dto';
 import { JwtService } from '@nestjs/jwt';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -17,12 +18,12 @@ export class AuthService {
     private jwtService: JwtService,
   ) {
     this.nodemailer = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "ijumanazarov631@gmail.com",
-    pass: process.env.APP_KEY,
-  },
-});
+      service: "gmail",
+      auth: {
+        user: "ijumanazarov631@gmail.com",
+        pass: process.env.APP_KEY,
+      },
+    });
   }
 
   async register(createAuthDto: CreateAuthDto): Promise<{ message: string }> {
@@ -54,7 +55,7 @@ export class AuthService {
 
     const otpValidation = /^\d{6}$/.test(otp)
 
-    if(!otpValidation) throw new BadRequestException("Invalid otp")
+    if (!otpValidation) throw new BadRequestException("Invalid otp")
 
     if (!foundeduser) throw new UnauthorizedException("Email not found")
 
@@ -63,11 +64,39 @@ export class AuthService {
     const now = Date.now()
     if (foundeduser.otpTime && foundeduser.otpTime < now) throw new BadRequestException("Otp expired")
 
-      await this.authRepo.update(foundeduser.id, {otp: "", otpTime: 0})
+    await this.authRepo.update(foundeduser.id, { otp: "", otpTime: 0 })
 
-      const payload = {username: foundeduser.username, role: foundeduser.role};
+    const payload = { username: foundeduser.username, role: foundeduser.role };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
+  }
+
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+
+    const foundedUser = await this.authRepo.findOne({ where: { email } });
+
+    if (!foundedUser) {
+      throw new BadRequestException("User not found");
+    }
+
+    const checkPassword= await bcrypt.compare(password,foundedUser.password)
+
+    if(checkPassword){
+    const otp = Array.from({ length: 6 }, () => Math.floor(Math.random() * 9)).join("");
+
+    const time = Date.now() + 120000
+
+    await this.nodemailer.sendMail({ from: "ijumanazarov631@gmail.com", to: email, subject: "lesson", text: "test content", html: `<b>${otp}</b>` })
+
+    await this.authRepo.update(foundedUser.id, {otp, otpTime: time})
+
+    return {message: "Please check your email"}
+    }else{
+      throw new BadRequestException("Wrong password")
+    }
+
+    return { message: "Registered" }
   }
 }
