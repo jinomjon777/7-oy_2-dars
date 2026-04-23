@@ -66,7 +66,11 @@ export class AuthService {
 
     await this.authRepo.update(foundeduser.id, { otp: "", otpTime: 0 })
 
-    const payload = { username: foundeduser.username, role: foundeduser.role };
+    const payload = {
+      id: foundeduser.id,
+      username: foundeduser.username,
+      role: foundeduser.role,
+    };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
@@ -81,19 +85,19 @@ export class AuthService {
       throw new BadRequestException("User not found");
     }
 
-    const checkPassword= await bcrypt.compare(password,foundedUser.password)
+    const checkPassword = await bcrypt.compare(password, foundedUser.password)
 
-    if(checkPassword){
-    const otp = Array.from({ length: 6 }, () => Math.floor(Math.random() * 9)).join("");
+    if (checkPassword) {
+      const otp = Array.from({ length: 6 }, () => Math.floor(Math.random() * 9)).join("");
 
-    const time = Date.now() + 120000
+      const time = Date.now() + 120000
 
-    await this.nodemailer.sendMail({ from: "ijumanazarov631@gmail.com", to: email, subject: "lesson", text: "test content", html: `<b>${otp}</b>` })
+      await this.nodemailer.sendMail({ from: "ijumanazarov631@gmail.com", to: email, subject: "lesson", text: "test content", html: `<b>${otp}</b>` })
 
-    await this.authRepo.update(foundedUser.id, {otp, otpTime: time})
+      await this.authRepo.update(foundedUser.id, { otp, otpTime: time })
 
-    return {message: "Please check your email"}
-    }else{
+      return { message: "Please check your email" }
+    } else {
       throw new BadRequestException("Wrong password")
     }
 

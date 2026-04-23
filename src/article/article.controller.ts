@@ -1,54 +1,71 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import {Controller,Get,Post,Body,Patch,Param,Delete,UseInterceptors,UploadedFile,Req, UseGuards,} from '@nestjs/common';
+
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import path from 'path';
+import { CreateArticleFileDto } from './dto/article-file.dto';
+import { AuthGuard } from 'src/common/guards/auth.guards';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { RolesUser } from 'src/shared/enums/roles.enum';
+import { Roles } from 'src/common/decarators/roles.decarator';
 
+@ApiBearerAuth("JWT-auth")
 @ApiTags('Article')
 @Controller('article')
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RolesUser.ADMIN, RolesUser.SUPERADMIN, RolesUser.USER)
   @Post()
   @ApiOperation({ summary: 'Yangi maqola yaratish' })
-  @ApiBody({ type: CreateArticleDto })
+  @ApiBody({ type: CreateArticleFileDto })
   @ApiResponse({ status: 201, description: 'Maqola muvaffaqiyatli yaratildi', type: CreateArticleDto })
-  @ApiResponse({ status: 400, description: 'Ma\'lumotlar noto\'g\'ri' })
-  create(@Body() createArticleDto: CreateArticleDto) {
-    return this.articleService.create(createArticleDto);
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: path.join(process.cwd(), 'uploads'),
+        filename: (req, file, cb) => {
+          const uniqueSuffix = `${file.originalname}${Date.now()}`;
+          const ext = path.extname(file.originalname);
+
+          // FIX: % emas $
+          cb(null, `${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
+  create(
+    @Body() createArticleDto: CreateArticleDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req,
+  ) {
+    return this.articleService.create(createArticleDto, file, req.user.id);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Barcha maqolalarni olish' })
-  @ApiResponse({ status: 200, description: 'Maqolalar ro\'yxati' })
   findAll() {
     return this.articleService.findAll();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'ID bo\'yicha maqolani olish' })
-  @ApiParam({ name: 'id', example: 1, description: 'Maqola ID si' })
-  @ApiResponse({ status: 200, description: 'Maqola topildi' })
-  @ApiResponse({ status: 404, description: 'Maqola topilmadi' })
   findOne(@Param('id') id: string) {
     return this.articleService.findOne(+id);
   }
 
+  @Roles(RolesUser.ADMIN, RolesUser.SUPERADMIN, RolesUser.USER)
   @Patch(':id')
-  @ApiOperation({ summary: 'Maqolani yangilash' })
-  @ApiParam({ name: 'id', example: 1, description: 'Maqola ID si' })
-  @ApiBody({ type: UpdateArticleDto })
-  @ApiResponse({ status: 200, description: 'Muvaffaqiyatli yangilandi', schema: { example: { message: 'Updated' } } })
-  @ApiResponse({ status: 404, description: 'Maqola topilmadi' })
   update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
     return this.articleService.update(+id, updateArticleDto);
   }
 
+  @Roles(RolesUser.ADMIN, RolesUser.SUPERADMIN, RolesUser.USER)
   @Delete(':id')
-  @ApiOperation({ summary: 'Maqolani o\'chirish' })
-  @ApiParam({ name: 'id', example: 1, description: 'Maqola ID si' })
-  @ApiResponse({ status: 200, description: 'Muvaffaqiyatli o\'chirildi', schema: { example: { message: 'Deleted' } } })
-  @ApiResponse({ status: 404, description: 'Maqola topilmadi' })
   remove(@Param('id') id: string) {
     return this.articleService.remove(+id);
   }

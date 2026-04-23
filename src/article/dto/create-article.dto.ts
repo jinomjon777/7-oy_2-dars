@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsArray, IsInt, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { Tag } from 'src/tag/entities/tag.entity';
 
 export class CreateArticleDto {
   @ApiProperty({ example: 'NestJS haqida', description: 'Maqola sarlavhasi' })
@@ -12,8 +14,12 @@ export class CreateArticleDto {
   @IsNotEmpty()
   content!: string;
 
-  @ApiProperty({ example: 1, description: 'Muallif foydalanuvchi ID si' })
-  @IsNumber()
-  @IsNotEmpty()
-  userId!: number;
+  @Transform(({value}) => 
+    typeof value === "string" ? value.split(",").map((item)=> Number(item)): value
+)
+  @IsArray()
+  @IsInt({ each: true})
+  @ApiProperty({default: [1,2,3]})
+  tags!: number[];
 }
+  

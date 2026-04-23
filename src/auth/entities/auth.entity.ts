@@ -1,7 +1,9 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
+import { Article } from "src/article/entities/article.entity";
 import { BaseEntity } from "src/database/entities/base.entity";
 import { RolesUser } from "src/shared/enums/roles.enum";
-import { Column, Entity } from "typeorm";
+import { Tag } from "src/tag/entities/tag.entity";
+import { Column, Entity, ManyToMany, OneToMany } from "typeorm";
 
 @Entity({ name: 'auth' })
 export class Auth extends BaseEntity {
@@ -28,4 +30,12 @@ export class Auth extends BaseEntity {
   @ApiHideProperty()
   @Column({ type: "bigint", nullable: true })
   otpTime?: number;
+
+
+  //relations
+  @OneToMany(() => Article, (article)=> article.author, {nullable: false})
+  articles!: Article[]
+
+  @OneToMany(() => Tag, (tag) => tag.createdBy, {nullable: false})
+  tags!: Tag[]
 }

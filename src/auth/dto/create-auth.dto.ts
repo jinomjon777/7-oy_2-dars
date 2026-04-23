@@ -12,7 +12,7 @@ export class CreateAuthDto {
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty({ example: 'Password1', description: 'Kamida 8 belgi, katta/kichik harf va raqam' })
+  @ApiProperty({ example: 'inomjon_0105', description: 'Kamida 8 belgi, katta/kichik harf va raqam' })
   @IsString()
   @IsNotEmpty()
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, {
