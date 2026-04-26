@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from './auth/auth.module';
-import { ArticleModule } from './article/article.module';
-import { Auth } from './auth/entities/auth.entity';
-import { Article } from './article/entities/article.entity';
-import { TagModule } from './tag/tag.module';
-import { Tag } from './tag/entities/tag.entity';
-
+import { AuthModule } from './modules/auth/auth.module';
+import { ArticleModule } from './modules/article/article.module';
+import { Auth } from './modules/auth/entities/auth.entity';
+import { Article } from './modules/article/entities/article.entity';
+import { TagModule } from './modules/tag/tag.module';
+import { Tag } from './modules/tag/entities/tag.entity';
+  
 @Module({
   imports: [
     ConfigModule.forRoot({ envFilePath: '.env', isGlobal: true }),

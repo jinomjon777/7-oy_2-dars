@@ -1,6 +1,6 @@
-import { Article } from "src/article/entities/article.entity";
-import { Auth } from "src/auth/entities/auth.entity";
-import { BaseEntity } from "src/database/entities/base.entity";
+import { Article } from "../../article/entities/article.entity";
+import { Auth } from "../../auth/entities/auth.entity";
+import { BaseEntity } from "../../../database/entities/base.entity";
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne } from "typeorm";
 
 @Entity({ name: 'tag'})

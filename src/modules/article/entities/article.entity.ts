@@ -1,7 +1,7 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
-import { Auth } from "src/auth/entities/auth.entity";
-import { BaseEntity } from "src/database/entities/base.entity";
-import { Tag } from "src/tag/entities/tag.entity";
+import { Auth } from "../../auth/entities/auth.entity";
+import { BaseEntity } from "../../../database/entities/base.entity";
+import { Tag } from "../../tag/entities/tag.entity";
 import { Column, DeleteDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne } from "typeorm";
 
 
@@ -34,4 +34,5 @@ export class Article extends BaseEntity {
   @ManyToMany(() => Tag, (tag) => tag.articles, {nullable: false, cascade: false})
   @JoinTable({name: 'tag_id'})
   tags!: Tag[]
+  images: any;
 }

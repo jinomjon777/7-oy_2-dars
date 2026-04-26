@@ -1,8 +1,8 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
-import { Article } from "src/article/entities/article.entity";
-import { BaseEntity } from "src/database/entities/base.entity";
+import { Article } from "../../article/entities/article.entity";
+import { BaseEntity } from "../../../database/entities/base.entity";
 import { RolesUser } from "src/shared/enums/roles.enum";
-import { Tag } from "src/tag/entities/tag.entity";
+import { Tag } from "../../tag/entities/tag.entity";
 import { Column, Entity, ManyToMany, OneToMany } from "typeorm";
 
 @Entity({ name: 'auth' })

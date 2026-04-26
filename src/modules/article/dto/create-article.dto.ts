@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsArray, IsInt, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { Tag } from 'src/tag/entities/tag.entity';
+import { Tag } from '../../tag/entities/tag.entity';
 
 export class CreateArticleDto {
   @ApiProperty({ example: 'NestJS haqida', description: 'Maqola sarlavhasi' })
@@ -22,4 +22,3 @@ export class CreateArticleDto {
   @ApiProperty({default: [1,2,3]})
   tags!: number[];
 }
-  

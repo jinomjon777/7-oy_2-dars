@@ -3,8 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ArticleService } from './article.service';
 import { ArticleController } from './article.controller';
 import { Article } from './entities/article.entity';
-import { AuthModule } from 'src/auth/auth.module';
-import { Tag } from 'src/tag/entities/tag.entity';
+import { AuthModule } from '../auth/auth.module';
+import { Tag } from '../tag/entities/tag.entity';
 
 @Module({
   imports: [
@@ -14,4 +14,4 @@ import { Tag } from 'src/tag/entities/tag.entity';
   controllers: [ArticleController],
   providers: [ArticleService],
 })
-export class ArticleModule {}  
+export class ArticleModule {}
