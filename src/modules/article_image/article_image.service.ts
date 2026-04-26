@@ -1,11 +1,42 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateArticleImageDto } from './dto/create-article_image.dto';
 import { UpdateArticleImageDto } from './dto/update-article_image.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ArticleImage } from './entities/article_image.entity';
+import { Repository } from 'typeorm';
+import { Article } from '../article/entities/article.entity';
 
 @Injectable()
 export class ArticleImageService {
-  create(createArticleImageDto: CreateArticleImageDto) {
-    return 'This action adds a new articleImage';
+  constructor(
+    @InjectRepository(ArticleImage) private articleImageRepo: Repository<ArticleImage>,
+    @InjectRepository(Article) private articleRepo: Repository<Article>
+){}
+  async create(createArticleImageDto: CreateArticleImageDto, files: Express.Multer.File[]) {
+
+    const foundedArticle = await this.articleRepo.findOne({where: {id: createArticleImageDto.articleId}})
+
+    if(!foundedArticle) throw new NotFoundException("Article not found")
+
+    const foundedImages = await this.articleImageRepo.find({where: {article: {id: createArticleImageDto.articleId}}})
+
+    if(foundedImages.length + files.length > 10) throw new BadRequestException("Limit has been exceeded")
+
+    let sortOrder:number = foundedImages.length + 1
+
+    let result:any[] = []
+    for (const item of files) {
+
+    const image = this.articleImageRepo.create({
+        url: `http://localhost:4001/uploads/${item.filename}`, 
+        sortorder: sortOrder, 
+        article: {id: createArticleImageDto.articleId}
+      })
+
+      sortOrder++
+      result.push(await this.articleImageRepo.save(image))
+    }
+    return result
   }
 
   findAll() {

@@ -7,12 +7,12 @@ export class ArticleImage extends BaseEntity {
   @Column({type: "varchar", length: 500})
   url!: string
 
-  @Column({type: "integer"})
-  sortorder!: number;
+  @Column({type: "integer"})   
+  sortorder!: number;  
 
 
 
-  @ManyToOne(()=> Article, (article)=> article.images)
+  @ManyToOne(()=> Article, (article)=> article.images)   
   article!: Article
 
   @OneToMany(()=> ArticleImage, (article_image)=> article_image.article)

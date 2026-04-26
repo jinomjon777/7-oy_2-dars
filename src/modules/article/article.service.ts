@@ -61,7 +61,7 @@ export class ArticleService {
   async findOne(id: number): Promise<Article> {
     const article = await this.articleRepo.findOne({ 
       where: { id },  
-      relations: ["author", "tags"]
+      relations: ["author", "tags", "image"]
     });
     if (!article) throw new NotFoundException('Article not found');
     return article;

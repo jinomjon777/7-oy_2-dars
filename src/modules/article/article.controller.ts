@@ -1,6 +1,6 @@
 import {Controller,Get,Post,Body,Patch,Param,Delete,UseInterceptors,UploadedFile,Req, UseGuards, Query,} from '@nestjs/common';
 
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiConsumes, ApiBearerAuth, ApiInternalServerErrorResponse } from '@nestjs/swagger';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -15,7 +15,7 @@ import { Roles } from 'src/common/decarators/roles.decarator';
 import { QueryDto } from './dto/query.dto';
 
 @ApiBearerAuth("JWT-auth")
-@ApiTags('Article')
+@ApiInternalServerErrorResponse({description: "Internal server error"})
 @Controller('article')
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
